@@ -1,18 +1,21 @@
+import java.lang.reflect.Array;
 import java.util.*;
 
 public class Automaton {
-    private static final int EPSILON = -1;  // Epsilon transitions represented by -1
+    static final int EPSILON = -1;  // Epsilon transitions represented by -1
 
-    private ArrayList<int[]> transitions; // Transition table for each state
-    private ArrayList<int[]> epsilonTransitions; // Epsilon transitions for each state
-    private int startState;  // Start state of the automaton
-    private ArrayList<Boolean> endStates;    // Accepting states of the automaton
+    HashMap<Integer, State> transitionTable;
+//    private ArrayList<Transition> transitions;
+//    private ArrayList<int[]> transitions; // Transition table for each state
+//    private ArrayList<int[]> epsilonTransitions; // Epsilon transitions for each state
+//    private ArrayList<Boolean> endStates;    // Accepting states of the automaton
     private int stateCount;  // Count of states in the automaton
+    private int startState;  // Start state of the automaton
+    private ArrayList<Integer> endStates; // Accepting states of the automaton
     private ArrayList<Integer> alphabet; // Alphabet of the automaton
 
     public Automaton() {
-        this.transitions = new ArrayList<>();
-        this.epsilonTransitions = new ArrayList<>();
+        this.transitionTable = new HashMap<>();
         this.stateCount = 0;
         this.endStates = new ArrayList<>();
         this.alphabet = new ArrayList<>();
@@ -29,11 +32,11 @@ public class Automaton {
     private int[] buildAutomaton(RegExTree tree) throws Exception {
         if (tree.subTrees.isEmpty()) {
             // Base case: leaf node (single character)
-            int s1 = newState();
-            int s2 = newState();
-            addTransition(s1, tree.root, s2);
-            alphabet.add(tree.root);
-            return new int[]{s1, s2};
+            State s1 = newState();
+            State s2 = newState();
+            addTransition(s1.getStateId(), tree.root, s2.getStateId());
+            alphabet.add(Integer.valueOf(tree.root));
+            return new int[]{s1.getStateId(), s2.getStateId()};
         }
 
         if (tree.root == RegEx.CONCAT) {
@@ -46,27 +49,27 @@ public class Automaton {
 
         if (tree.root == RegEx.ALTERN) {
             // Alternation: A | B
-            int s1 = newState();
-            int s2 = newState();
+            State s1 = newState();
+            State s2 = newState();
             int[] left = buildAutomaton(tree.subTrees.get(0));
             int[] right = buildAutomaton(tree.subTrees.get(1));
-            addEpsilonTransition(s1, left[0]);
-            addEpsilonTransition(s1, right[0]);
-            addEpsilonTransition(left[1], s2);
-            addEpsilonTransition(right[1], s2);
-            return new int[]{s1, s2};
+            addEpsilonTransition(s1.getStateId(), left[0]);
+            addEpsilonTransition(s1.getStateId(), right[0]);
+            addEpsilonTransition(left[1], s2.getStateId());
+            addEpsilonTransition(right[1], s2.getStateId());
+            return new int[]{s1.getStateId(), s2.getStateId()};
         }
 
         if (tree.root == RegEx.ETOILE) {
             // Kleene Star: A*
-            int s1 = newState();
-            int s2 = newState();
+            State s1 = newState();
+            State s2 = newState();
             int[] subAutomaton = buildAutomaton(tree.subTrees.get(0));
-            addEpsilonTransition(s1, subAutomaton[0]);
-            addEpsilonTransition(s1, s2);
+            addEpsilonTransition(s1.getStateId(), subAutomaton[0]);
+            addEpsilonTransition(s1.getStateId(), s2.getStateId());
             addEpsilonTransition(subAutomaton[1], subAutomaton[0]);
-            addEpsilonTransition(subAutomaton[1], s2);
-            return new int[]{s1, s2};
+            addEpsilonTransition(subAutomaton[1], s2.getStateId());
+            return new int[]{s1.getStateId(), s2.getStateId()};
         }
 
         throw new Exception("Unknown regex operator");
@@ -76,59 +79,61 @@ public class Automaton {
     private void addTransition(int from, int symbol, int to) {
         ensureStateExists(from);
         ensureStateExists(to);
-        transitions.get(from)[symbol] = to;
+        transitionTable.get(from).addTransition(new Transition(from, to, symbol));
     }
 
     // Adds an epsilon transition between two states
     private void addEpsilonTransition(int from, int to) {
         ensureStateExists(from);
         ensureStateExists(to);
-        epsilonTransitions.get(from)[to] = 1;
+        transitionTable.get(from).addTransition(new Transition(from, to, EPSILON));
     }
 
     // Sets the state as an end (accepting) state
     private void setEndState(int state) {
         ensureStateExists(state);
-        endStates.set(state, true);
+        // TODO
+        System.err.println("Setting state " + state + " as an end state");
+        endStates.add(transitionTable.get(state).getStateId());
     }
 
     // Ensures that a state exists in the transition table
     private void ensureStateExists(int state) {
-        while (state >= transitions.size()) {
-            transitions.add(new int[256]);  // 256 possible input characters
-            epsilonTransitions.add(new int[stateCount+1]);
-            endStates.add(false);  // Initially, states are not accepting
+        if (state >= stateCount) {
+            for (int i = stateCount; i <= state; i++) {
+                State newState = new State(i, false, false);
+                transitionTable.put(i, newState);
+            }
+            stateCount = state + 1;
         }
     }
 
     // Generates a new state
-    private int newState() {
-        return stateCount++;
+    private State newState() {
+        State state = new State(stateCount++, false, false);
+        transitionTable.put(state.getStateId(), state);
+        return state;
     }
 
     // Prints the automaton (states, transitions, epsilon transitions, and accepting states)
     public void printAutomaton() {
         System.out.println("Start State: " + startState);
         System.out.println("End States: ");
-        for (int i = 0; i < endStates.size(); i++) {
-            if (endStates.get(i)) {
+        for (int i = 0; i < stateCount; i++) {
+            State state = transitionTable.get(i);
+            System.out.println("State " + i + ":");
+            System.out.println("Transitions: ");
+            for (Transition transition : state.getTransitions()) {
+                System.out.println("State " + transition.getFromStateId()
+                        + " -> State " + transition.getToStateId() + " on input " +
+                        (char) transition.getTransitionSymbol());
+            }
+            System.out.println("Epsilon Transitions: ");
+            for (Transition transition : state.getEpsilonTransitions()) {
+                System.out.println("State " + transition.getFromStateId() + " -> State " + transition.getToStateId() + " on epsilon");
+            }
+            if (state.isFinalState()) {
                 System.out.println("State " + i + " is an accepting state");
-            }
-        }
-        System.out.println("Transitions: ");
-        for (int i = 0; i < transitions.size(); i++) {
-            for (int j = 0; j < 256; j++) {
-                if (transitions.get(i)[j] != 0) {
-                    System.out.println("State " + i + " -> State " + transitions.get(i)[j] + " on input " + (char) j);
-                }
-            }
-        }
-        System.out.println("Epsilon Transitions: ");
-        for (int i = 0; i < epsilonTransitions.size(); i++) {
-            for (int j = 0; j < epsilonTransitions.get(i).length; j++) {
-                if (epsilonTransitions.get(i)[j] == 1) {
-                    System.out.println("State " + i + " -> State " + j + " on epsilon");
-                }
             }
         }
     }
@@ -143,30 +148,35 @@ public class Automaton {
         closedSet.add(state);
         openSet.add(state);
         while (!openSet.isEmpty()) {
-            int currentState = openSet.poll();
-            for (int i = 0; i < epsilonTransitions.get(currentState).length; i++) {
-                if (epsilonTransitions.get(currentState)[i] == 1 && !closedSet.contains(i)) {
-                    closedSet.add(i);
-                    openSet.add(i);
+//            for (int i = 0; i < epsilonTransitions.get(currentState).length; i++) {
+//                if (epsilonTransitions.get(currentState)[i] == 1 && !closedSet.contains(i)) {
+//                    closedSet.add(i);
+//                    openSet.add(i);
+//                }
+//            }
+            State state1 = transitionTable.get(openSet.poll());
+            for (Transition transition : state1.getEpsilonTransitions()) {
+                if (!closedSet.contains(transition.getToStateId())) {
+                    closedSet.add(transition.getToStateId());
+                    openSet.add(transition.getToStateId());
                 }
             }
         }
         return closedSet;
     }
 
-    // Determinizes the automaton
     private Automaton determinize(Automaton automaton) {
         Automaton dfa = new Automaton();
         HashMap<HashSet<Integer>, Integer> stateMap = new HashMap<>(); // map of sets of states to new DFA state
         Queue<HashSet<Integer>> queue = new LinkedList<>(); // queue to process states in order of discovery
         HashSet<Integer> startSet = epsilonClosure(automaton.startState); // epsilon closure of start state of NDFA
-        stateMap.put(startSet, dfa.newState()); // add start state to the map
+        stateMap.put(startSet, dfa.newState().getStateId()); // add start state to the map
         queue.add(startSet);
 
         // Process all sets until no more new sets are found
         while (!queue.isEmpty()) {
             HashSet<Integer> currentSet = queue.poll(); // get the next set to process
-            int currentDFAState = stateMap.get(currentSet); // get DFA state corresponding to this NFA set ( used for transition creation and end state marking)
+            int currentDFAState = stateMap.get(currentSet); // get DFA state corresponding to this NFA set
 
             // Process all symbols in the alphabet
             for (int symbol : automaton.alphabet) {
@@ -174,16 +184,19 @@ public class Automaton {
 
                 // Find all states we can reach on this symbol from any state in the current set
                 for (int ndfaState : currentSet) {
-                    int nextNFAState = automaton.transitions.get(ndfaState)[symbol];
-                    if (nextNFAState != 0) { // if there's a transition on this symbol
-                        nextSet.addAll(epsilonClosure(nextNFAState)); // add epsilon closure of the next state
+                    State currentNFAState = automaton.transitionTable.get(ndfaState);
+                    if (currentNFAState != null) {
+                        int nextNFAState = currentNFAState.getTransition(symbol);
+                        if (nextNFAState != -1) { // if there's a transition on this symbol
+                            nextSet.addAll(epsilonClosure(nextNFAState)); // add epsilon closure of the next state
+                        }
                     }
                 }
 
                 // If the next set is non-empty and not yet processed, add it to the queue and map
                 if (!nextSet.isEmpty()) {
                     if (!stateMap.containsKey(nextSet)) {
-                        int newState = dfa.newState();
+                        int newState = dfa.newState().getStateId();
                         stateMap.put(nextSet, newState);
                         queue.add(nextSet); // enqueue for processing its transitions
                     }
@@ -195,7 +208,9 @@ public class Automaton {
 
             // Mark ending states if any of them are ending states in the NDFA
             for (int nfaState : currentSet) {
-                if (automaton.endStates.get(nfaState)) {
+                System.err.println("Checking state " + nfaState);
+                if ( automaton.transitionTable.get(nfaState).isFinalState() ) {
+                    System.err.println("State " + nfaState + " is an end state");
                     dfa.setEndState(currentDFAState);
                     break;
                 }
@@ -205,6 +220,70 @@ public class Automaton {
         dfa.startState = stateMap.get(startSet); // set the start state of the DFA
         return dfa;
     }
+
+
+//    private boolean isDistinguishable(int state1, int state2, ArrayList<Integer> partitions){
+//            for (int alpha : alphabet) {
+//                if (transitions.get(state1)[alpha] != transitions.get(state2)[alpha] &&
+//                        (partitions.contains(transitions.get(state1)[alpha]) && partitions.contains(transitions.get(state2)[alpha]))) {
+//                    return true;
+//                }
+//            }
+//        return true;
+//    }
+//
+//    private ArrayList<ArrayList<Integer>> partition(ArrayList<ArrayList<Integer>> toPartition){
+//        ArrayList<ArrayList<Integer>> partitions = new ArrayList<>();
+//
+//        for (ArrayList<Integer> part : toPartition) {
+//            for (int i = 0; i < part.size(); i++) {
+//                ArrayList<Integer> newPart = new ArrayList<>();
+//                newPart.add(part.get(i));
+//                for (int j = i + 1; j < part.size(); j++) {
+//                    if (!isDistinguishable(part.get(i), part.get(j), part)) {
+//                       // not distinguishable so the partition stays the same
+//                        newPart.add(part.get(j));
+//                    }else{
+//                        // distinguishable so we create a new partition and partition the rest of the states
+//                        ArrayList<Integer> newPart2 = new ArrayList<>();
+//                        newPart2.add(part.get(j));
+//                        for (int k = j + 1; k < part.size(); k++) {
+//                            if (!isDistinguishable(part.get(j), part.get(k), part)) {
+//                                newPart2.add(part.get(k));
+//                            }
+//                        }
+//
+//                    }
+//                }
+//                partitions.add(newPart);
+//
+//            }
+//        }
+//        return  partitions;
+//    }
+//
+//    private Automaton minimize(Automaton automaton){
+//        Automaton dfa = new Automaton();
+//        // step 1 : accept and non accept states
+//        ArrayList<Integer> acceptingStates = new ArrayList<>();
+//        ArrayList<Integer> nonAcceptingStates = new ArrayList<>();
+//        for (int i = 0; i < automaton.endStates.size(); i++) {
+//            if (automaton.endStates.get(i)) {
+//                acceptingStates.add(i);
+//            } else {
+//                nonAcceptingStates.add(i);
+//            }
+//        }
+//
+//        int k = 1;
+//
+//        ArrayList<ArrayList<Integer>> partitions = new ArrayList<>();
+//        partitions.add(acceptingStates);
+//        partitions.add(nonAcceptingStates);
+//
+//
+//        return  dfa;
+//    }
 
 
 
