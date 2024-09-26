@@ -12,13 +12,13 @@ public class Automaton {
     private int stateCount;  // Count of states in the automaton
     private int startState;  // Start state of the automaton
     private ArrayList<Integer> endStates; // Accepting states of the automaton
-    private ArrayList<Integer> alphabet; // Alphabet of the automaton
+    private HashSet<Integer> alphabet; // Alphabet of the automaton
 
     public Automaton() {
         this.transitionTable = new HashMap<>();
         this.stateCount = 0;
         this.endStates = new ArrayList<>();
-        this.alphabet = new ArrayList<>();
+        this.alphabet = new HashSet<>();
     }
 
     // Generates an automaton from a regex tree
@@ -80,6 +80,9 @@ public class Automaton {
         ensureStateExists(from);
         ensureStateExists(to);
         transitionTable.get(from).addTransition(new Transition(from, to, symbol));
+        if (symbol != EPSILON) {
+            alphabet.add(symbol);
+        }
     }
 
     // Adds an epsilon transition between two states
@@ -207,9 +210,9 @@ public class Automaton {
 
             // Mark ending states if any of them are ending states in the NDFA
             for (int nfaState : currentSet) {
-                System.err.println("Checking state " + nfaState);
+//                System.err.println("Checking state " + nfaState);
                 if ( automaton.transitionTable.get(nfaState).isFinalState() ) {
-                    System.err.println("State " + nfaState + " is an end state");
+//                    System.err.println("State " + nfaState + " is an end state");
                     dfa.setEndState(currentDFAState);
                     break;
                 }
@@ -220,83 +223,128 @@ public class Automaton {
         return dfa;
     }
 
+    private Automaton minimizeDFA(Automaton dfa) {
+        // Step 1: Create initial partition
+        List<Set<Integer>> partition = new ArrayList<>();
+        Set<Integer> acceptingStates = new HashSet<>(dfa.endStates);
+        Set<Integer> nonAcceptingStates = new HashSet<>();
 
-//    private boolean isDistinguishable(int state1, int state2, ArrayList<Integer> partitions){
-//            for (int alpha : alphabet) {
-//                if (transitions.get(state1)[alpha] != transitions.get(state2)[alpha] &&
-//                        (partitions.contains(transitions.get(state1)[alpha]) && partitions.contains(transitions.get(state2)[alpha]))) {
-//                    return true;
-//                }
-//            }
-//        return true;
-//    }
-//
-//    private ArrayList<ArrayList<Integer>> partition(ArrayList<ArrayList<Integer>> toPartition){
-//        ArrayList<ArrayList<Integer>> partitions = new ArrayList<>();
-//
-//        for (ArrayList<Integer> part : toPartition) {
-//            for (int i = 0; i < part.size(); i++) {
-//                ArrayList<Integer> newPart = new ArrayList<>();
-//                newPart.add(part.get(i));
-//                for (int j = i + 1; j < part.size(); j++) {
-//                    if (!isDistinguishable(part.get(i), part.get(j), part)) {
-//                       // not distinguishable so the partition stays the same
-//                        newPart.add(part.get(j));
-//                    }else{
-//                        // distinguishable so we create a new partition and partition the rest of the states
-//                        ArrayList<Integer> newPart2 = new ArrayList<>();
-//                        newPart2.add(part.get(j));
-//                        for (int k = j + 1; k < part.size(); k++) {
-//                            if (!isDistinguishable(part.get(j), part.get(k), part)) {
-//                                newPart2.add(part.get(k));
-//                            }
-//                        }
-//
-//                    }
-//                }
-//                partitions.add(newPart);
-//
-//            }
-//        }
-//        return  partitions;
-//    }
-//
-//    private Automaton minimize(Automaton automaton){
-//        Automaton dfa = new Automaton();
-//        // step 1 : accept and non accept states
-//        ArrayList<Integer> acceptingStates = new ArrayList<>();
-//        ArrayList<Integer> nonAcceptingStates = new ArrayList<>();
-//        for (int i = 0; i < automaton.endStates.size(); i++) {
-//            if (automaton.endStates.get(i)) {
-//                acceptingStates.add(i);
-//            } else {
-//                nonAcceptingStates.add(i);
-//            }
-//        }
-//
-//        int k = 1;
-//
-//        ArrayList<ArrayList<Integer>> partitions = new ArrayList<>();
-//        partitions.add(acceptingStates);
-//        partitions.add(nonAcceptingStates);
-//
-//
-//        return  dfa;
-//    }
+        for (int i = 0; i < dfa.stateCount; i++) {
+            if (!acceptingStates.contains(i)) {
+                nonAcceptingStates.add(i);
+            }
+        }
 
+        if (!acceptingStates.isEmpty()) {
+            partition.add(acceptingStates);
+        }
+        if (!nonAcceptingStates.isEmpty()) {
+            partition.add(nonAcceptingStates);
+        }
 
+        // Step 2: Refine partition
+        boolean changed;
+        do {
+            changed = false;
+            List<Set<Integer>> newPartition = new ArrayList<>();
 
+            for (Set<Integer> group : partition) {
+                List<Set<Integer>> subgroups = splitGroup(group, partition, dfa);
+                newPartition.addAll(subgroups);
+                if (subgroups.size() > 1) {
+                    changed = true;
+                }
+            }
 
+            partition = newPartition;
+        } while (changed);
 
+        // Step 3: Build minimized DFA
+        Automaton minimizedDFA = new Automaton();
+        // map a group of states to a single state in the minimized DFA
+        Map<Set<Integer>, Integer> groupToStateMap = new HashMap<>();
+
+        for (int i = 0; i < partition.size(); i++) {
+            Set<Integer> group = partition.get(i);
+            groupToStateMap.put(group, minimizedDFA.newState().getStateId());
+
+            if (group.contains(dfa.startState)) {
+                minimizedDFA.startState = groupToStateMap.get(group);
+            }
+
+            if (!Collections.disjoint(group, dfa.endStates)) {
+                minimizedDFA.setEndState(groupToStateMap.get(group));
+            }
+        }
+
+        // Add transitions to minimized DFA
+        for (Set<Integer> group : partition) {
+            int representativeState = group.iterator().next();
+            int fromState = groupToStateMap.get(group);
+
+            for (int symbol : dfa.alphabet) {
+                State state = dfa.transitionTable.get(representativeState);
+                int toStateInDFA = state.getTransition(symbol);
+
+                if (toStateInDFA != -1) {
+                    for (Set<Integer> toGroup : partition) {
+                        if (toGroup.contains(toStateInDFA)) {
+                            int toState = groupToStateMap.get(toGroup);
+                            minimizedDFA.addTransition(fromState, symbol, toState);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return minimizedDFA;
+    }
+
+    private List<Set<Integer>> splitGroup(Set<Integer> group, List<Set<Integer>> partition, Automaton dfa) {
+        if (group.size() <= 1) {
+            return Collections.singletonList(group);
+        }
+
+        Map<String, Set<Integer>> subgroups = new HashMap<>();
+
+        // Group states based on transitions
+        for (int state : group) {
+            StringBuilder sb = new StringBuilder(); // key for the subgroup: represents transitions on each symbol
+            for (int symbol : dfa.alphabet) {
+                State currentState = dfa.transitionTable.get(state);
+                int nextState = currentState.getTransition(symbol);
+                int partitionIndex = getPartitionIndex(nextState, partition);
+                sb.append(partitionIndex).append(","); // append the partition index of the next state
+            }
+            String key = sb.toString();
+            subgroups.computeIfAbsent(key, k -> new HashSet<>()).add(state);
+        }
+
+        return new ArrayList<>(subgroups.values());
+    }
+
+    private int getPartitionIndex(int state, List<Set<Integer>> partition) {
+        for (int i = 0; i < partition.size(); i++) {
+            if (partition.get(i).contains(state)) {
+                return i;
+            }
+        }
+        return -1;
+    }
     public static void main(String[] args) throws Exception {
         // Example usage with a predefined regex tree
         RegExTree tree = RegEx.exampleAhoUllman(); // Example from the Aho-Ullman book
         Automaton automaton = new Automaton();
         automaton.buildFromRegexTree(tree);
 //        automaton.printAutomaton();
-        System.err.println(automaton.epsilonClosure(3).toString());
+//        System.err.println(automaton.epsilonClosure(3).toString());
         Automaton dfa = automaton.determinize(automaton);
         dfa.printAutomaton();
+        System.out.println("----------------------\n");
+        System.out.println("----------------------\n");
+        Automaton minimizedDFA = automaton.minimizeDFA(dfa);
+        minimizedDFA.printAutomaton();
     }
 
 }
