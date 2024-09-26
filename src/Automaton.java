@@ -92,9 +92,8 @@ public class Automaton {
     // Sets the state as an end (accepting) state
     private void setEndState(int state) {
         ensureStateExists(state);
-        // TODO
-        System.err.println("Setting state " + state + " as an end state");
         endStates.add(transitionTable.get(state).getStateId());
+        transitionTable.get(state).setFinalState(true);
     }
 
     // Ensures that a state exists in the transition table
