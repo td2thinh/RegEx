@@ -9,9 +9,9 @@ public class Automaton {
 //    private ArrayList<int[]> transitions; // Transition table for each state
 //    private ArrayList<int[]> epsilonTransitions; // Epsilon transitions for each state
 //    private ArrayList<Boolean> endStates;    // Accepting states of the automaton
-    private int stateCount;  // Count of states in the automaton
-    private int startState;  // Start state of the automaton
-    private ArrayList<Integer> endStates; // Accepting states of the automaton
+int stateCount;  // Count of states in the automaton
+    int startState;  // Start state of the automaton
+    ArrayList<Integer> endStates; // Accepting states of the automaton
     private HashSet<Integer> alphabet; // Alphabet of the automaton
 
     public Automaton() {
@@ -167,7 +167,7 @@ public class Automaton {
         return closedSet;
     }
 
-    private Automaton determinize(Automaton automaton) {
+    Automaton determinize(Automaton automaton) {
         Automaton dfa = new Automaton();
         HashMap<HashSet<Integer>, Integer> stateMap = new HashMap<>(); // map of sets of states to new DFA state
         Queue<HashSet<Integer>> queue = new LinkedList<>(); // queue to process states in order of discovery
@@ -223,10 +223,10 @@ public class Automaton {
         return dfa;
     }
 
-    private Automaton minimizeDFA(Automaton dfa) {
+    Automaton minimizeDFA(Automaton dfa) {
         // Step 1: Create initial partition
         List<Set<Integer>> partition = new ArrayList<>();
-        Set<Integer> acceptingStates = new HashSet<>(dfa.endStates);
+        Set<Integer> acceptingStates = new HashSet<>(dfa.endStates); // accepting states of the DFA ( end states )
         Set<Integer> nonAcceptingStates = new HashSet<>();
 
         for (int i = 0; i < dfa.stateCount; i++) {
@@ -272,7 +272,7 @@ public class Automaton {
                 minimizedDFA.startState = groupToStateMap.get(group);
             }
 
-            if (!Collections.disjoint(group, dfa.endStates)) {
+            if (!Collections.disjoint(group, dfa.endStates)) { // if there are elements in common then we sett the group to be an end state
                 minimizedDFA.setEndState(groupToStateMap.get(group));
             }
         }
@@ -301,6 +301,13 @@ public class Automaton {
         return minimizedDFA;
     }
 
+    /**
+     * Split a group of states into subgroups based on transitions
+     * @param group
+     * @param partition
+     * @param dfa
+     * @return
+     */
     private List<Set<Integer>> splitGroup(Set<Integer> group, List<Set<Integer>> partition, Automaton dfa) {
         if (group.size() <= 1) {
             return Collections.singletonList(group);
@@ -309,6 +316,7 @@ public class Automaton {
         Map<String, Set<Integer>> subgroups = new HashMap<>();
 
         // Group states based on transitions
+        // this will build a map of :  key( 'the state numbers concatenated together' ) -> value( the set of states that have the same transitions )
         for (int state : group) {
             StringBuilder sb = new StringBuilder(); // key for the subgroup: represents transitions on each symbol
             for (int symbol : dfa.alphabet) {
@@ -324,6 +332,7 @@ public class Automaton {
         return new ArrayList<>(subgroups.values());
     }
 
+    // Get the partition index of a state
     private int getPartitionIndex(int state, List<Set<Integer>> partition) {
         for (int i = 0; i < partition.size(); i++) {
             if (partition.get(i).contains(state)) {

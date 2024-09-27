@@ -13,6 +13,7 @@ public class RegEx {
     static final int PARENTHESEOUVRANT = 0x16641664;
     static final int PARENTHESEFERMANT = 0x51515151;
     static final int DOT = 0xD07;
+    static final int ADD = 0xA33;
 
     //REGEX
     private static String regEx;
@@ -52,6 +53,25 @@ public class RegEx {
         System.out.println("Goodbye Mr. Anderson.");
     }
 
+    public static RegExTree parse(String regex){
+        regEx = regex;
+        if (regEx.length()<1) {
+            System.err.println("  >> ERROR: empty regEx.");
+        } else {
+            System.out.print("  >> ASCII codes: ["+(int)regEx.charAt(0));
+            for (int i=1;i<regEx.length();i++) System.out.print(","+(int)regEx.charAt(i));
+            System.out.println("].");
+            try {
+                RegExTree ret = parse();
+                System.out.println("  >> Tree result: "+ret.toString()+".");
+                return ret;
+            } catch (Exception e) {
+                System.err.println("  >> ERROR: syntax error for regEx \""+regEx+"\".");
+            }
+        }
+        return null;
+    }
+
     //FROM REGEX TO SYNTAX TREE
     private static RegExTree parse() throws Exception {
         //BEGIN DEBUG: set conditionnal to true for debug example
@@ -89,6 +109,10 @@ public class RegEx {
 
         return removeProtection(result.get(0));
     }
+
+    //PROCESSING
+
+
     private static boolean containParenthese(ArrayList<RegExTree> trees) {
         for (RegExTree t: trees) if (t.root==PARENTHESEFERMANT || t.root==PARENTHESEOUVRANT) return true;
         return false;
