@@ -28,7 +28,7 @@ public class SimplifiedEgrep {
             int lineNumber = 0;
             while ((line = reader.readLine()) != null) {
                 lineNumber++;
-                if (matchLine(line.toLowerCase())) {  // Convert to lowercase
+                if (matchLine(line)) {  // Convert to lowercase
                     matchingLines.add("Line " + lineNumber + ": " + line);
                 }
             }
@@ -59,9 +59,10 @@ public class SimplifiedEgrep {
     }
 
     public static void main(String[] args) {
-        String regex = "a(k)*ad";  // Changed to lowercase
+        String regex = "A(k)*ad";  // Changed to lowercase
         String filePath = "56667-0.txt";
-
+//        String regex = args[0] ;
+//        String filePath = args[1] ;
         try {
             SimplifiedEgrep egrep = new SimplifiedEgrep(regex);
             List<String> matchingLines = egrep.searchFile(filePath);

@@ -223,6 +223,9 @@ int stateCount;  // Count of states in the automaton
         return dfa;
     }
 
+
+
+
     Automaton minimizeDFA(Automaton dfa) {
         // Step 1: Create initial partition
         List<Set<Integer>> partition = new ArrayList<>();
@@ -272,7 +275,7 @@ int stateCount;  // Count of states in the automaton
                 minimizedDFA.startState = groupToStateMap.get(group);
             }
 
-            if (!Collections.disjoint(group, dfa.endStates)) { // if there are elements in common then we sett the group to be an end state
+            if (!Collections.disjoint(group, dfa.endStates)) { // if there are elements in common then we set the group to be an end state
                 minimizedDFA.setEndState(groupToStateMap.get(group));
             }
         }
@@ -318,15 +321,14 @@ int stateCount;  // Count of states in the automaton
         // Group states based on transitions
         // this will build a map of :  key( 'the state numbers concatenated together' ) -> value( the set of states that have the same transitions )
         for (int state : group) {
-            StringBuilder sb = new StringBuilder(); // key for the subgroup: represents transitions on each symbol
+            StringBuilder key = new StringBuilder();
             for (int symbol : dfa.alphabet) {
                 State currentState = dfa.transitionTable.get(state);
                 int nextState = currentState.getTransition(symbol);
                 int partitionIndex = getPartitionIndex(nextState, partition);
-                sb.append(partitionIndex).append(","); // append the partition index of the next state
+                key.append(partitionIndex).append(",");
             }
-            String key = sb.toString();
-            subgroups.computeIfAbsent(key, k -> new HashSet<>()).add(state);
+            subgroups.computeIfAbsent(key.toString(), k -> new HashSet<>()).add(state);
         }
 
         return new ArrayList<>(subgroups.values());
@@ -341,6 +343,8 @@ int stateCount;  // Count of states in the automaton
         }
         return -1;
     }
+
+
     public static void main(String[] args) throws Exception {
         // Example usage with a predefined regex tree
         RegExTree tree = RegEx.exampleAhoUllman(); // Example from the Aho-Ullman book
