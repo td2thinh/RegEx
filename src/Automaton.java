@@ -1,3 +1,6 @@
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -345,6 +348,30 @@ int stateCount;  // Count of states in the automaton
     }
 
 
+    public static void writeDotFile(Automaton automaton) {
+        File file = new File("automaton.dot");
+        try (PrintWriter writer = new PrintWriter(file)) {
+            writer.println("digraph Automaton {");
+            writer.println("rankdir=LR;");
+            writer.println("size=\"8,5\"");
+            writer.println("node [shape = doublecircle];");
+            for (int state : automaton.endStates) {
+                writer.println(state + ";");
+            }
+            writer.println("node [shape = circle];");
+            for (int i = 0; i < automaton.stateCount; i++) {
+                State state = automaton.transitionTable.get(i);
+                for (Transition transition : state.getTransitions()) {
+                    writer.println(i + " -> " + transition.getToStateId() + " [ label = \"" + (char) transition.getTransitionSymbol() + "\" ];");
+                }
+            }
+            writer.println("}");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     public static void main(String[] args) throws Exception {
         // Example usage with a predefined regex tree
         RegExTree tree = RegEx.exampleAhoUllman(); // Example from the Aho-Ullman book
@@ -358,6 +385,7 @@ int stateCount;  // Count of states in the automaton
         System.out.println("----------------------\n");
         Automaton minimizedDFA = automaton.minimizeDFA(dfa);
         minimizedDFA.printAutomaton();
+        writeDotFile(minimizedDFA);
     }
 
 }

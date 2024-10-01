@@ -16,6 +16,7 @@ public class SimplifiedEgrep {
         this.automaton = this.automaton.determinize(this.automaton);
         System.out.println("DFA built. States: " + this.automaton.stateCount);
         this.automaton = this.automaton.minimizeDFA(this.automaton);
+        Automaton.writeDotFile(this.automaton);
         System.out.println("Minimized DFA. States: " + this.automaton.stateCount);
         System.out.println("Start state: " + this.automaton.startState);
         System.out.println("End states: " + this.automaton.endStates);
