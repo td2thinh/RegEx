@@ -1,18 +1,17 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class Automaton {
     static final int EPSILON = -1;  // Epsilon transitions represented by -1
 
     HashMap<Integer, State> transitionTable;
-//    private ArrayList<Transition> transitions;
+    //    private ArrayList<Transition> transitions;
 //    private ArrayList<int[]> transitions; // Transition table for each state
 //    private ArrayList<int[]> epsilonTransitions; // Epsilon transitions for each state
 //    private ArrayList<Boolean> endStates;    // Accepting states of the automaton
-int stateCount;  // Count of states in the automaton
+    int stateCount;  // Count of states in the automaton
     int startState;  // Start state of the automaton
     ArrayList<Integer> endStates; // Accepting states of the automaton
     private HashSet<Integer> alphabet; // Alphabet of the automaton
@@ -22,6 +21,45 @@ int stateCount;  // Count of states in the automaton
         this.stateCount = 0;
         this.endStates = new ArrayList<>();
         this.alphabet = new HashSet<>();
+    }
+
+    public static void writeDotFile(Automaton automaton) {
+        File file = new File("automaton.dot");
+        try (PrintWriter writer = new PrintWriter(file)) {
+            writer.println("digraph Automaton {");
+            writer.println("rankdir=LR;");
+            writer.println("size=\"8,5\"");
+            writer.println("node [shape = doublecircle];");
+            for (int state : automaton.endStates) {
+                writer.println(state + ";");
+            }
+            writer.println("node [shape = circle];");
+            for (int i = 0; i < automaton.stateCount; i++) {
+                State state = automaton.transitionTable.get(i);
+                for (Transition transition : state.getTransitions()) {
+                    writer.println(i + " -> " + transition.getToStateId() + " [ label = \"" + (char) transition.getTransitionSymbol() + "\" ];");
+                }
+            }
+            writer.println("}");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        // Example usage with a predefined regex tree
+        RegExTree tree = RegEx.exampleAhoUllman(); // Example from the Aho-Ullman book
+        Automaton automaton = new Automaton();
+        automaton.buildFromRegexTree(tree);
+//        automaton.printAutomaton();
+//        System.err.println(automaton.epsilonClosure(3).toString());
+        Automaton dfa = automaton.determinize(automaton);
+        dfa.printAutomaton();
+        System.out.println("----------------------\n");
+        System.out.println("----------------------\n");
+        Automaton minimizedDFA = automaton.minimizeDFA(dfa);
+        minimizedDFA.printAutomaton();
+        writeDotFile(minimizedDFA);
     }
 
     // Generates an automaton from a regex tree
@@ -143,7 +181,6 @@ int stateCount;  // Count of states in the automaton
         }
     }
 
-
     // returns a set of states that are reachable from the given state on epsilon transitions
     private HashSet<Integer> epsilonClosure(int state) {
         HashSet<Integer> closedSet = new HashSet<>();
@@ -214,7 +251,7 @@ int stateCount;  // Count of states in the automaton
             // Mark ending states if any of them are ending states in the NDFA
             for (int nfaState : currentSet) {
 //                System.err.println("Checking state " + nfaState);
-                if ( automaton.transitionTable.get(nfaState).isFinalState() ) {
+                if (automaton.transitionTable.get(nfaState).isFinalState()) {
 //                    System.err.println("State " + nfaState + " is an end state");
                     dfa.setEndState(currentDFAState);
                     break;
@@ -225,9 +262,6 @@ int stateCount;  // Count of states in the automaton
         dfa.startState = stateMap.get(startSet); // set the start state of the DFA
         return dfa;
     }
-
-
-
 
     Automaton minimizeDFA(Automaton dfa) {
         // Step 1: Create initial partition
@@ -309,6 +343,7 @@ int stateCount;  // Count of states in the automaton
 
     /**
      * Split a group of states into subgroups based on transitions
+     *
      * @param group
      * @param partition
      * @param dfa
@@ -345,47 +380,6 @@ int stateCount;  // Count of states in the automaton
             }
         }
         return -1;
-    }
-
-
-    public static void writeDotFile(Automaton automaton) {
-        File file = new File("automaton.dot");
-        try (PrintWriter writer = new PrintWriter(file)) {
-            writer.println("digraph Automaton {");
-            writer.println("rankdir=LR;");
-            writer.println("size=\"8,5\"");
-            writer.println("node [shape = doublecircle];");
-            for (int state : automaton.endStates) {
-                writer.println(state + ";");
-            }
-            writer.println("node [shape = circle];");
-            for (int i = 0; i < automaton.stateCount; i++) {
-                State state = automaton.transitionTable.get(i);
-                for (Transition transition : state.getTransitions()) {
-                    writer.println(i + " -> " + transition.getToStateId() + " [ label = \"" + (char) transition.getTransitionSymbol() + "\" ];");
-                }
-            }
-            writer.println("}");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    public static void main(String[] args) throws Exception {
-        // Example usage with a predefined regex tree
-        RegExTree tree = RegEx.exampleAhoUllman(); // Example from the Aho-Ullman book
-        Automaton automaton = new Automaton();
-        automaton.buildFromRegexTree(tree);
-//        automaton.printAutomaton();
-//        System.err.println(automaton.epsilonClosure(3).toString());
-        Automaton dfa = automaton.determinize(automaton);
-        dfa.printAutomaton();
-        System.out.println("----------------------\n");
-        System.out.println("----------------------\n");
-        Automaton minimizedDFA = automaton.minimizeDFA(dfa);
-        minimizedDFA.printAutomaton();
-        writeDotFile(minimizedDFA);
     }
 
 }

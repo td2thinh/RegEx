@@ -4,8 +4,10 @@ size="8,5"
 node [shape = doublecircle];
 0;
 node [shape = circle];
-1 -> 0 [ label = "d" ];
-2 -> 3 [ label = "A" ];
-3 -> 1 [ label = "a" ];
-3 -> 3 [ label = "k" ];
+1 -> 1 [ label = "a" ];
+1 -> 1 [ label = "r" ];
+1 -> 1 [ label = "g" ];
+1 -> 2 [ label = "o" ];
+2 -> 0 [ label = "n" ];
+3 -> 1 [ label = "S" ];
 }
