@@ -29,6 +29,7 @@ public class SimplifiedEgrep {
             }
         } else if (algoType.equalsIgnoreCase("kmp")) {
             // TODO : KMP algorithm
+            
         } else {
             throw new Exception("Invalid algorithm type: " + algoType);
         }
