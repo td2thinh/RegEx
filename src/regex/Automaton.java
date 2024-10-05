@@ -1,3 +1,5 @@
+package regex;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -6,14 +8,14 @@ import java.util.*;
 public class Automaton {
     static final int EPSILON = -1;  // Epsilon transitions represented by -1
 
-    HashMap<Integer, State> transitionTable;
-    //    private ArrayList<Transition> transitions;
-//    private ArrayList<int[]> transitions; // Transition table for each state
+    public HashMap<Integer, State> transitionTable;
+    //    private ArrayList<regex.Transition> transitions;
+//    private ArrayList<int[]> transitions; // regex.Transition table for each state
 //    private ArrayList<int[]> epsilonTransitions; // Epsilon transitions for each state
 //    private ArrayList<Boolean> endStates;    // Accepting states of the automaton
-    int stateCount;  // Count of states in the automaton
-    int startState;  // Start state of the automaton
-    ArrayList<Integer> endStates; // Accepting states of the automaton
+    public int stateCount;  // Count of states in the automaton
+    public int startState;  // Start state of the automaton
+    public ArrayList<Integer> endStates; // Accepting states of the automaton
     private HashSet<Integer> alphabet; // Alphabet of the automaton
 
     public Automaton() {
@@ -26,7 +28,7 @@ public class Automaton {
     public static void writeDotFile(Automaton automaton) {
         File file = new File("automaton.dot");
         try (PrintWriter writer = new PrintWriter(file)) {
-            writer.println("digraph Automaton {");
+            writer.println("digraph regex.Automaton {");
             writer.println("rankdir=LR;");
             writer.println("size=\"8,5\"");
             writer.println("node [shape = doublecircle];");
@@ -160,23 +162,23 @@ public class Automaton {
 
     // Prints the automaton (states, transitions, epsilon transitions, and accepting states)
     public void printAutomaton() {
-        System.out.println("Start State: " + startState);
+        System.out.println("Start regex.State: " + startState);
         System.out.println("End States: ");
         for (int i = 0; i < stateCount; i++) {
             State state = transitionTable.get(i);
-            System.out.println("State " + i + ":");
+            System.out.println("regex.State " + i + ":");
             System.out.println("Transitions: ");
             for (Transition transition : state.getTransitions()) {
-                System.out.println("State " + transition.getFromStateId()
-                        + " -> State " + transition.getToStateId() + " on input " +
+                System.out.println("regex.State " + transition.getFromStateId()
+                        + " -> regex.State " + transition.getToStateId() + " on input " +
                         (char) transition.getTransitionSymbol());
             }
             System.out.println("Epsilon Transitions: ");
             for (Transition transition : state.getEpsilonTransitions()) {
-                System.out.println("State " + transition.getFromStateId() + " -> State " + transition.getToStateId() + " on epsilon");
+                System.out.println("regex.State " + transition.getFromStateId() + " -> regex.State " + transition.getToStateId() + " on epsilon");
             }
             if (state.isFinalState()) {
-                System.out.println("State " + i + " is an accepting state");
+                System.out.println("regex.State " + i + " is an accepting state");
             }
         }
     }
@@ -207,7 +209,7 @@ public class Automaton {
         return closedSet;
     }
 
-    Automaton determinize(Automaton automaton) {
+    public Automaton determinize(Automaton automaton) {
         Automaton dfa = new Automaton();
         HashMap<HashSet<Integer>, Integer> stateMap = new HashMap<>(); // map of sets of states to new DFA state
         Queue<HashSet<Integer>> queue = new LinkedList<>(); // queue to process states in order of discovery
@@ -252,7 +254,7 @@ public class Automaton {
             for (int nfaState : currentSet) {
 //                System.err.println("Checking state " + nfaState);
                 if (automaton.transitionTable.get(nfaState).isFinalState()) {
-//                    System.err.println("State " + nfaState + " is an end state");
+//                    System.err.println("regex.State " + nfaState + " is an end state");
                     dfa.setEndState(currentDFAState);
                     break;
                 }
@@ -263,7 +265,7 @@ public class Automaton {
         return dfa;
     }
 
-    Automaton minimizeDFA(Automaton dfa) {
+    public Automaton minimizeDFA(Automaton dfa) {
         // Step 1: Create initial partition
         List<Set<Integer>> partition = new ArrayList<>();
         Set<Integer> acceptingStates = new HashSet<>(dfa.endStates); // accepting states of the DFA ( end states )
@@ -381,5 +383,4 @@ public class Automaton {
         }
         return -1;
     }
-
 }

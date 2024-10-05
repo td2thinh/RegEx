@@ -405,7 +405,7 @@ CONTENTS
     in Babylonia under the Kassites--Kudurru-inscriptions or
     boundary-stones--Their evidence on the Babylonian system of
     land-tenure--Gradual disappearance of tribal proprietorship
-    as a result of West-Semitic and Kassite policy--Transition
+    as a result of West-Semitic and Kassite policy--regex.Transition
     from collective to private ownership
 
     CHAPTER VIII

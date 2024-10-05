@@ -1,3 +1,5 @@
+package regex;
+
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -245,7 +247,7 @@ public class RegEx {
     }
 
     //EXAMPLE
-    // --> RegEx from Aho-Ullman book Chap.10 Example 10.25
+    // --> regex.RegEx from Aho-Ullman book Chap.10 Example 10.25
     public static RegExTree exampleAhoUllman() {
         RegExTree a = new RegExTree((int) 'a', new ArrayList<RegExTree>());
         RegExTree b = new RegExTree((int) 'b', new ArrayList<RegExTree>());
@@ -264,38 +266,3 @@ public class RegEx {
     }
 }
 
-//UTILITARY CLASS
-class RegExTree {
-    protected int root;
-    protected ArrayList<RegExTree> subTrees;
-
-    public RegExTree(int root, ArrayList<RegExTree> subTrees) {
-        this.root = root;
-        this.subTrees = subTrees;
-    }
-
-    //FROM TREE TO PARENTHESIS
-    public String toString() {
-        if (subTrees.isEmpty()) return rootToString();
-        String result = rootToString() + "(" + subTrees.get(0).toString();
-        for (int i = 1; i < subTrees.size(); i++) result += "," + subTrees.get(i).toString();
-        return result + ")";
-    }
-
-    private String rootToString() {
-        if (root == RegEx.CONCAT) return ".";
-        if (root == RegEx.ETOILE) return "*";
-        if (root == RegEx.ALTERN) return "|";
-        if (root == RegEx.DOT) return ".";
-        return Character.toString((char) root);
-    }
-
-    // Getters
-    public int getRoot() {
-        return root;
-    }
-
-    public ArrayList<RegExTree> getSubTrees() {
-        return subTrees;
-    }
-}

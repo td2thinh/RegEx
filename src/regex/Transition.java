@@ -1,3 +1,5 @@
+package regex;
+
 import lombok.*;
 
 @NoArgsConstructor
