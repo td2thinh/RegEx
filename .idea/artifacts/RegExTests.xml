@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="RegExTests">
+    <output-path>$PROJECT_DIR$/out/artifacts/RegExTests</output-path>
+    <root id="archive" name="RegExTests.jar">
+      <element id="module-output" name="RegEx" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.34/lombok-1.18.34.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jfree/jfreechart/1.5.5/jfreechart-1.5.5.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

@@ -10,6 +10,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 import strategy.Uhlmann;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -18,8 +19,8 @@ import java.util.List;
 
 public class UlhmanPerformanceTests {
     private static final String GUTENBERG_DIR = "testbed";
-    private static final int MAX_BOOKS = 20;
-    private static final int ITERATIONS = 1000;
+    private static final int MAX_BOOKS = 9;
+    private static final int ITERATIONS = 100;
 
     public static void main(String[] args) throws Exception {
         List<String> regexes = generateTestRegexes();
@@ -147,11 +148,24 @@ public class UlhmanPerformanceTests {
                 true,
                 false
         );
-        ChartUtils.saveChartAsPNG(new File(filename), chart, 800, 600);
+
+        // Get current working directory
+        String currentDir = System.getProperty("user.dir");
+        String uniqueFilename = "automaton_construction_" + System.currentTimeMillis() + ".png";
+        File outputFile = new File(currentDir, uniqueFilename);
+        ChartUtils.saveChartAsPNG(outputFile, chart, 800, 600);
+
     }
 
     private static void createLineChart(XYSeriesCollection dataset, String title, String xAxisLabel, String yAxisLabel, String filename) throws IOException {
         JFreeChart chart = ChartFactory.createXYLineChart(title, xAxisLabel, yAxisLabel, dataset);
-        ChartUtils.saveChartAsPNG(new File(filename), chart, 800, 600);
+        // Get current working directory
+        String currentDir = System.getProperty("user.dir");
+        String uniqueFilename = "text_search_" + System.currentTimeMillis() + ".png";
+        File outputFile = new File(currentDir, uniqueFilename);
+        ChartUtils.saveChartAsPNG(outputFile, chart, 800, 600);
+
+
+
     }
 }
