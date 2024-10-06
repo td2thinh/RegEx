@@ -8,17 +8,40 @@ import regex.State;
 public class Uhlmann implements LineMatcher {
     private Automaton automaton;
     private final String regex;
+    private RegExTree regexTree;
 
-    public Uhlmann(String regex) throws Exception {
+    public Uhlmann(String regex) {
         this.regex = regex;
-        RegExTree regexTree = RegEx.parse(regex);
-        this.automaton = new Automaton();
-        this.automaton.buildFromRegexTree(regexTree);
-        this.automaton = this.automaton.determinize(this.automaton);
-        this.automaton = this.automaton.minimizeDFA(this.automaton);
-        Automaton.writeDotFile(this.automaton);
     }
 
+    public void buildAutomaton() throws Exception {
+        parseRegex();
+        buildNFA();
+        determinize();
+        minimize();
+        writeDotFile();
+    }
+
+    public void parseRegex() throws Exception {
+        this.regexTree = RegEx.parse(regex);
+    }
+
+    public void buildNFA() throws Exception {
+        this.automaton = new Automaton();
+        this.automaton.buildFromRegexTree(regexTree);
+    }
+
+    public void determinize() {
+        this.automaton = this.automaton.determinize(this.automaton);
+    }
+
+    public void minimize() {
+        this.automaton = this.automaton.minimizeDFA(this.automaton);
+    }
+
+    public void writeDotFile() {
+        Automaton.writeDotFile(this.automaton);
+    }
 
     @Override
     public boolean matchLine(String line, boolean debugMode) throws Exception {
@@ -28,9 +51,7 @@ public class Uhlmann implements LineMatcher {
             int symbol = (int) c;
             State state = automaton.transitionTable.get(currentState);
             int nextState = state.getTransition(symbol);
-//            System.out.println("Current char: " + c + ", Current state: " + currentState + ", Next state: " + nextState);
             if (nextState == -1) {
-                // No transition for this symbol, reset to start state
                 currentState = automaton.startState;
             } else {
                 currentState = nextState;
@@ -39,10 +60,10 @@ public class Uhlmann implements LineMatcher {
                 if (debugMode) {
                     System.out.println("Match found at position " + i);
                 }
-                return true; // Match found
+                return true;
             }
         }
-        return false; // No match found
+        return false;
     }
 
     @Override

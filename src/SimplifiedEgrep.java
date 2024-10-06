@@ -24,6 +24,7 @@ public class SimplifiedEgrep {
                 matcher = new KMP(regex);
             } else {
                 matcher = new Uhlmann(regex);
+                ((Uhlmann)matcher).buildAutomaton();
             }
         } else {
             throw new Exception("Invalid algorithm type: " + algoType);

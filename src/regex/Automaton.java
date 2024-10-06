@@ -28,7 +28,7 @@ public class Automaton {
     public static void writeDotFile(Automaton automaton) {
         File file = new File("automaton.dot");
         try (PrintWriter writer = new PrintWriter(file)) {
-            writer.println("digraph regex.Automaton {");
+            writer.println("digraph RegexAutomaton {");
             writer.println("rankdir=LR;");
             writer.println("size=\"8,5\"");
             writer.println("node [shape = doublecircle];");
@@ -36,13 +36,15 @@ public class Automaton {
                 writer.println(state + ";");
             }
             writer.println("node [shape = circle];");
+
             for (int i = 0; i < automaton.stateCount; i++) {
+
                 State state = automaton.transitionTable.get(i);
                 for (Transition transition : state.getTransitions()) {
                     writer.println(i + " -> " + transition.getToStateId() + " [ label = \"" + (char) transition.getTransitionSymbol() + "\" ];");
                 }
             }
-            writer.println("}");
+            writer.println("\n}");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -50,7 +52,8 @@ public class Automaton {
 
     public static void main(String[] args) throws Exception {
         // Example usage with a predefined regex tree
-        RegExTree tree = RegEx.exampleAhoUllman(); // Example from the Aho-Ullman book
+        RegExTree tree = RegEx.parse("S(a|g|r)*on");
+//        RegExTree tree = RegEx.exampleAhoUllman();
         Automaton automaton = new Automaton();
         automaton.buildFromRegexTree(tree);
 //        automaton.printAutomaton();
