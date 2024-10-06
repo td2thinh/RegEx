@@ -19,6 +19,7 @@ public class SimplifiedEgrep {
         this.algoType = algoType;
         if (algoType.equalsIgnoreCase("default")) {
             matcher = new Uhlmann(regex);
+            ((Uhlmann)matcher).buildAutomaton();
         } else if (algoType.equalsIgnoreCase("kmp")) {
             if (!regex.contains("|") && !regex.contains("*") && !regex.contains("(") && !regex.contains(")") && !regex.contains(".")) {
                 matcher = new KMP(regex);
@@ -32,7 +33,7 @@ public class SimplifiedEgrep {
         if (debugMode) {
             matcher.debug();
         }
-    }g
+    }
 
     public static void main(String[] args) {
 //        if (args.length < 2) {
