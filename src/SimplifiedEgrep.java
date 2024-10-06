@@ -32,7 +32,7 @@ public class SimplifiedEgrep {
         if (debugMode) {
             matcher.debug();
         }
-    }
+    }g
 
     public static void main(String[] args) {
 //        if (args.length < 2) {
