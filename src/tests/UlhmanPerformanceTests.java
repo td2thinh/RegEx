@@ -17,9 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UlhmanPerformanceTests {
-    private static final String GUTENBERG_DIR = "testbed"; // Update this path
-    private static final int MAX_BOOKS = 10; // Adjust as needed
-    private static final int ITERATIONS = 100; // Number of times to repeat each test for averaging
+    private static final String GUTENBERG_DIR = "testbed";
+    private static final int MAX_BOOKS = 20;
+    private static final int ITERATIONS = 1000;
 
     public static void main(String[] args) throws Exception {
         List<String> regexes = generateTestRegexes();
@@ -31,14 +31,14 @@ public class UlhmanPerformanceTests {
         List<String> regexes = new ArrayList<>();
 
         // Simple word matches
-        regexes.add("and");
+        regexes.add("find");
         regexes.add("a");
 
-        // Alternation
+        // Alternation + star
         regexes.add("S(a|g|r)*on");
 
         // complex patterns
-        regexes.add("((t|s)h.*.*l)"); // Starts with t or s and ends with l , shall
+        regexes.add("((t|s)h.*.*l)"); // ex: shall
 
         // Patterns likely to match in all books
         regexes.add("the|and|of|to|in|is|that|for|it|as");
@@ -59,7 +59,7 @@ public class UlhmanPerformanceTests {
                 Uhlmann uhlmann = new Uhlmann(regex);
 
                 long startTime = System.nanoTime();
-                uhlmann.parseRegex();
+                uhlmann.parseRegex(false);
                 long endTime = System.nanoTime();
                 parseTime += (endTime - startTime) / 1_000_000.0;
 
@@ -110,7 +110,7 @@ public class UlhmanPerformanceTests {
         for (String regex : regexes) {
             XYSeries series = new XYSeries("Search Time for regex: " + regex);
             Uhlmann matcher = new Uhlmann(regex);
-            matcher.parseRegex();
+            matcher.parseRegex(false);
             matcher.buildNFA();
             matcher.determinize();
             matcher.minimize();
@@ -126,7 +126,7 @@ public class UlhmanPerformanceTests {
                     totalTime += (endTime - startTime);
                 }
 
-                double averageTime = totalTime / (double) ITERATIONS / 1_000_000.0; // Convert to milliseconds
+                double averageTime = totalTime / (double) ITERATIONS / 1_000_000.0;
                 series.add(content.length(), averageTime);
             }
 

@@ -73,6 +73,27 @@ public class RegEx {
         return null;
     }
 
+    public static RegExTree parse(String regex, Boolean debug) {
+        regEx = regex;
+        if (regEx.length() < 1) {
+            if (debug)
+                System.err.println("  >> ERROR: empty regEx.");
+        } else {
+            if (debug) System.out.print("  >> ASCII codes: [" + (int) regEx.charAt(0));
+            for (int i = 1; i < regEx.length(); i++)
+                if (debug) System.out.print("," + (int) regEx.charAt(i));
+            if (debug) System.out.println("].");
+            try {
+                RegExTree ret = parse();
+                if (debug) System.out.println("  >> Tree result: " + ret.toString() + ".");
+                return ret;
+            } catch (Exception e) {
+                if (debug) System.err.println("  >> ERROR: syntax error for regEx \"" + regEx + "\".");
+            }
+        }
+        return null;
+    }
+
     //FROM REGEX TO SYNTAX TREE
     private static RegExTree parse() throws Exception {
         ArrayList<RegExTree> result = new ArrayList<RegExTree>();

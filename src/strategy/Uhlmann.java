@@ -25,6 +25,9 @@ public class Uhlmann implements LineMatcher {
     public void parseRegex() throws Exception {
         this.regexTree = RegEx.parse(regex);
     }
+    public void parseRegex(Boolean debug) throws Exception {
+        this.regexTree = RegEx.parse(regex,debug);
+    }
 
     public void buildNFA() throws Exception {
         this.automaton = new Automaton();
